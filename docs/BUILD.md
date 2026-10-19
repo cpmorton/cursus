@@ -2,11 +2,18 @@
 
 Pipeline: `source.md` → `build.py` (python-docx) → `.docx` → LibreOffice → `.pdf`. Arial 10.5pt, exactly 14pt leading, 0.65" side and 0.55" top/bottom margins, US Letter.
 
-```bash
-pip install python-docx                       # one-time
-python3 build.py <src>.md "<Your Name> - <Role> Resume.docx" 10.5 1.15 0.65
-soffice --headless --convert-to pdf "<Your Name> - <Role> Resume.docx"
-```
+Pick whichever host you have. All of them run the same `./build` in the same image:
+
+| Host | Command |
+| --- | --- |
+| Browser only | Push to `main`, then download the `pdfs` artifact from the Actions run |
+| Codespaces / VS Code devcontainer | `./build resume.md` (the devcontainer uses the `Dockerfile`) |
+| Docker | `docker run --rm -v "$PWD:/work" ghcr.io/cpmorton/cursus build resume.md` |
+| Native (best effort) | `pip install python-docx`, install LibreOffice + `fonts-liberation` + `poppler-utils`, then `./build resume.md` |
+
+`./build` writes `out/<name>.docx` and `out/<name>.pdf`, and fails if a PDF exceeds 2 pages (`-p N` changes the limit). Pagination is only guaranteed in the image, because font versions move line breaks.
+
+Calling `build.py` directly: `python3 build.py <src>.md out.docx 10.5 1.15 0.65`.
 
 Arguments after the output file are body size (pt), the leading multiple and the side margin (in). Exact leading is computed as size × multiple × 1.15, rounded to 0.5pt.
 

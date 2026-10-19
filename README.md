@@ -16,9 +16,9 @@ Your real data never enters this repo, so there is nothing to scrub out of its h
 ## Quick start
 
 ```bash
-pip install python-docx
-python3 build.py example/jane-doe-platform.md jane.docx 10.5 1.15 0.65
-soffice --headless --convert-to pdf jane.docx
+docker run --rm -v "$PWD:/work" ghcr.io/cpmorton/cursus build example/jane-doe-platform.md
+# or open in a Codespace and run: ./build example/*.md
+# or don't install anything: every push to main builds PDFs in GitHub Actions
 ```
 
 The source format is a tiny markup dialect, described in [docs/BUILD.md](docs/BUILD.md). The layout and ATS rules learned the hard way are in [docs/CONVENTIONS.md](docs/CONVENTIONS.md). Reusable AI prompts for interview prep and LinkedIn refreshes are in [prompts/](prompts/).
