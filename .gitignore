@@ -1,0 +1,7 @@
+# Build outputs never belong in the public repo: a local build of a real resume
+# would carry real contact details. The private repo tracks its own PDFs.
+*.docx
+*.pdf
+~$*
+__pycache__/
+.DS_Store
