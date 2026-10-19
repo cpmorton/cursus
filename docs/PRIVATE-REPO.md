@@ -36,4 +36,6 @@ printf '%s\n' '555-0100' 'jane@example.com' 'Acme Corp' > ~/.config/cursus/denyl
 ln -s ../../tools/leak-check.sh .git/hooks/pre-commit
 ```
 
+Matching ignores case, spaces and punctuation, so one entry per fact is enough. The hook also blocks any SSN-shaped number without needing your SSN; never put government IDs in the denylist, which would just create another plaintext copy.
+
 GitHub push protection (free on public repos: Settings → Code security) blocks real credentials. It doesn't know your phone number, which is why the hook exists.
