@@ -26,6 +26,10 @@ else
   [[ -n $raw ]] || echo "leak-check: no denylist; SSN shape check only" >&2
 fi
 pats=$(grep -v -e '^\s*#' -e '^\s*$' <<<"$raw" | norm | grep . || true)
+# entries under 4 chars would match nearly every line; skip them loudly
+short=$(grep -c -E '^.{1,3}$' <<<"$pats" || true)
+((short)) && echo "leak-check: ignoring $short denylist entries shorter than 4 characters" >&2
+pats=$(grep -E '^.{4,}$' <<<"$pats" || true)
 # count only, never values: lets you confirm a write-only CI secret loaded as intended
 [[ $mode == all ]] && echo "leak-check: $(grep -c . <<<"$pats" || true) denylist entries loaded" >&2
 
