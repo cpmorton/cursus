@@ -36,6 +36,12 @@ printf '%s\n' '555-0100' 'jane@example.com' 'Acme Corp' > ~/.config/cursus/denyl
 ln -s ../../tools/leak-check.sh .git/hooks/pre-commit
 ```
 
-Matching ignores case, spaces and punctuation, so one entry per fact is enough. The hook also blocks any SSN-shaped number without needing your SSN; never put government IDs in the denylist, which would just create another plaintext copy.
+Matching ignores case, spaces and punctuation, so one entry per fact is enough. The hook also blocks SSN-formatted numbers (`NNN-NN-NNNN` or `NNN NN NNNN`) with no secret needed.
+
+## CI backstop
+
+The `leak-check` job scans every tracked file on each push, reading the denylist from the Actions secret `CURSUS_DENYLIST_TEXT` (entries separated by `;`). It reports `file:line` only, never content: CI logs on a public repo are public, and GitHub masks only a secret's exact full value, not one entry inside a list. Bare identifiers that are too generic to shape-match (a 9-digit SSN without dashes) are safe to list here, because the secret never reaches a log or an LLM session.
+
+CI runs after the push, so on a public repo it detects rather than prevents; the hook is the prevention layer.
 
 GitHub push protection (free on public repos: Settings → Code security) blocks real credentials. It doesn't know your phone number, which is why the hook exists.

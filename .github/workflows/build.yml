@@ -8,6 +8,16 @@ permissions:
   contents: read
   packages: write
 jobs:
+  leak-check:
+    # Backstop for anything that skipped the pre-commit hook. Prints file:line only.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - run: tools/leak-check.sh --all
+        env:
+          CURSUS_DENYLIST_TEXT: ${{ secrets.CURSUS_DENYLIST_TEXT }}
   build:
     runs-on: ubuntu-latest
     steps:
