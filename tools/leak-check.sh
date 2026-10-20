@@ -26,6 +26,8 @@ else
   [[ -n $raw ]] || echo "leak-check: no denylist; SSN shape check only" >&2
 fi
 pats=$(grep -v -e '^\s*#' -e '^\s*$' <<<"$raw" | norm | grep . || true)
+# count only, never values: lets you confirm a write-only CI secret loaded as intended
+[[ $mode == all ]] && echo "leak-check: $(grep -c . <<<"$pats" || true) denylist entries loaded" >&2
 
 fail=0
 report() {  # $1 = why, $2 = "loc:text"

@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# md -> docx -> pdf, then enforce the page limit. Usage: build <src.md>... [-o outdir] [-p maxpages]
+# md -> docx -> pdf, then enforce the page limit. Usage: build <src.md>... [-o outdir] [-p maxpages] [--public]
+# --public drops phone numbers from the contact line (the one with ' · ' separators) for copies posted online.
 set -euo pipefail
 here=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
-out=out max=2 srcs=()
+out=out max=2 public=0 srcs=()
 while (($#)); do
   case $1 in
     -o) out=$2; shift 2 ;;
     -p) max=$2; shift 2 ;;
+    --public) public=1; shift ;;
     -h|--help) sed -n 2p "$0"; exit 0 ;;
     *) srcs+=("$1"); shift ;;
   esac
@@ -16,7 +18,22 @@ mkdir -p "$out"
 fail=0
 for src in "${srcs[@]}"; do
   base=$(basename "${src%.md}")
-  python3 "$here/build.py" "$src" "$out/$base.docx" 10.5 1.15 0.65
+  in=$src
+  if ((public)); then
+    in=$(mktemp --suffix=.md)
+    # phone token: optional +, then 7+ digits mixed with space . - ( ) or U+2011, as its own ' · ' field
+    python3 - "$src" > "$in" <<'PY'
+import re, sys
+for line in open(sys.argv[1], encoding="utf-8"):
+    if " · " in line:
+        f = [x for x in line.rstrip("\n").split(" · ")
+             if not re.fullmatch(r"\+?[\d ().\-\u2011]{7,}", x.strip())]
+        line = " · ".join(f) + "\n"
+    sys.stdout.write(line)
+PY
+  fi
+  python3 "$here/build.py" "$in" "$out/$base.docx" 10.5 1.15 0.65
+  if ((public)); then rm -f "$in"; fi
   # private profile dir: a shared/locked LibreOffice profile is the classic headless hang
   soffice -env:UserInstallation=file:///tmp/cursus-lo --headless \
           --convert-to pdf --outdir "$out" "$out/$base.docx" >/dev/null

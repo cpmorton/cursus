@@ -11,7 +11,7 @@ Pick whichever host you have. All of them run the same `./build` in the same ima
 | Docker | `docker run --rm -v "$PWD:/work" ghcr.io/cpmorton/cursus build resume.md` |
 | Native (best effort) | `pip install python-docx`, install LibreOffice + `fonts-liberation` + `poppler-utils`, then `./build resume.md` |
 
-`./build` writes `out/<name>.docx` and `out/<name>.pdf`, and fails if a PDF exceeds 2 pages (`-p N` changes the limit). Pagination is only guaranteed in the image, because font versions move line breaks.
+`./build` writes `out/<name>.docx` and `out/<name>.pdf`, and fails if a PDF exceeds 2 pages (`-p N` changes the limit). `--public` drops any phone number from the ` · `-separated contact line, for copies you post online; recruiters can ask for it. Pagination is only guaranteed in the image, because font versions move line breaks.
 
 Calling `build.py` directly: `python3 build.py <src>.md out.docx 10.5 1.15 0.65`.
 
