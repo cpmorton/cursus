@@ -17,6 +17,19 @@ Calling `build.py` directly: `python3 build.py <src>.md out.docx 10.5 1.15 0.65`
 
 Arguments after the output file are body size (pt), the leading multiple and the side margin (in). Exact leading is computed as size × multiple × 1.15, rounded to 0.5pt.
 
+## Image versions
+
+`main` publishes `ghcr.io/cpmorton/cursus:latest`, which moves. A git tag `vX.Y.Z` publishes `:X.Y.Z`, which never moves. Pin a version anywhere pagination matters, because a toolchain change can reflow a page:
+
+```dockerfile
+# .devcontainer/Dockerfile in your private repo: the one place the version lives
+FROM ghcr.io/cpmorton/cursus:1.0.0
+```
+
+Dependabot's `docker` ecosystem bumps that `FROM` line with a PR when a new version ships. It reads Dockerfiles, not workflow YAML, so CI should read the image from this file rather than repeat it. [PRIVATE-REPO.md](PRIVATE-REPO.md) has the wiring.
+
+To release: `git tag v1.2.0 && git push origin v1.2.0`. Bump the major version for anything that can change pagination (base image, fonts, LibreOffice, `build.py` spacing), the minor for new flags, and the patch for fixes.
+
 ## Markup dialect
 
 | Prefix | Renders as |

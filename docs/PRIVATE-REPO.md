@@ -26,6 +26,54 @@ Data flows one way only, from cursus into the private repo. Never push the priva
 git remote set-url --push upstream DISABLED
 ```
 
+## Pinning the toolchain
+
+Keep the cursus version in one file, let Dependabot bump it, and have the devcontainer and CI both read it. Each bump arrives as a PR whose CI rebuilds every resume, so a release that reflows a page fails there instead of on `main`.
+
+```dockerfile
+# .devcontainer/Dockerfile
+FROM ghcr.io/<you>/cursus:1.0.0
+```
+
+```jsonc
+// .devcontainer/devcontainer.json
+{ "build": { "dockerfile": "Dockerfile" } }
+```
+
+```yaml
+# .github/dependabot.yml
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /.devcontainer
+    schedule: { interval: weekly }
+```
+
+```yaml
+# .github/workflows/build.yml (excerpt): a job's container can't come from a file,
+# so a tiny first job reads the FROM line and hands it over
+on:
+  push: { branches: [main] }
+  pull_request:
+jobs:
+  toolchain:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.pin.outputs.image }}
+    steps:
+      - uses: actions/checkout@v7
+        with: { sparse-checkout: .devcontainer }
+      - id: pin
+        run: awk '/^FROM /{print "image=" $2; exit}' .devcontainer/Dockerfile >> "$GITHUB_OUTPUT"
+  build:
+    needs: toolchain
+    runs-on: ubuntu-latest
+    container: ${{ needs.toolchain.outputs.image }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: build resumes/src/*.md -o out
+```
+
 ## Leak guard for your cursus clone
 
 If you contribute back to cursus, install the pre-commit hook. It refuses any commit whose staged diff matches a pattern in a denylist kept **outside** the repo. The mechanism is public and the patterns stay private. Checking the denylist into the repo would leak exactly what it guards.
