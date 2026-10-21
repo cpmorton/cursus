@@ -2,6 +2,7 @@ name: build
 on:
   push:
     branches: [main]
+    tags: ['v*.*.*']
   pull_request:
   workflow_dispatch:
 permissions:
@@ -42,10 +43,13 @@ jobs:
           name: pdfs
           path: out/*.pdf
       - name: Publish image to GHCR
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        # main moves :latest; a vX.Y.Z git tag publishes an immutable X.Y.Z that consumers pin
+        if: github.event_name == 'push'
         run: |
           img=ghcr.io/${GITHUB_REPOSITORY,,}
-          docker tag cursus:ci "$img:latest"
-          docker tag cursus:ci "$img:sha-${GITHUB_SHA::7}"
-          docker push "$img:latest"
-          docker push "$img:sha-${GITHUB_SHA::7}"
+          case $GITHUB_REF in
+            refs/heads/main) tags="latest sha-${GITHUB_SHA::7}" ;;
+            refs/tags/v*)    tags=${GITHUB_REF_NAME#v} ;;  # no 'v': the Docker convention Dependabot sorts on
+            *) exit 0 ;;
+          esac
+          for t in $tags; do docker tag cursus:ci "$img:$t" && docker push "$img:$t"; done
