@@ -35,8 +35,13 @@ PY
   python3 "$here/build.py" "$in" "$out/$base.docx" 10.5 1.15 0.65
   if ((public)); then rm -f "$in"; fi
   # private profile dir: a shared/locked LibreOffice profile is the classic headless hang
-  soffice -env:UserInstallation=file:///tmp/cursus-lo --headless \
-          --convert-to pdf --outdir "$out" "$out/$base.docx" >/dev/null
+  if ! lo_err=$(soffice -env:UserInstallation=file:///tmp/cursus-lo --headless \
+          --convert-to pdf --outdir "$out" "$out/$base.docx" 2>&1 >/dev/null); then
+    printf '%s\n' "$lo_err" >&2; exit 1
+  fi
+  # the image ships no JRE, so oosplash can't find javaldx and warns on every run; drop only that line
+  lo_err=$(grep -v 'failed to launch javaldx' <<<"$lo_err" || true)
+  [[ -z $lo_err ]] || printf '%s\n' "$lo_err" >&2
   pages=$(pdfinfo "$out/$base.pdf" | awk '/^Pages:/{print $2}')
   if ((pages > max)); then echo "FAIL $base.pdf: $pages pages (max $max)" >&2; fail=1
   else echo "ok   $base.pdf: $pages page(s)"; fi
